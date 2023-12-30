@@ -1,4 +1,4 @@
-Install Zadig app,
+Install Zadig app, for USB driver installation.
 List all devices.
 Expect to see ESP32-S2 Interface 2
 Install a version of libusb for the device
@@ -42,3 +42,10 @@ This worked about 3 times after various resets, but since then,
 - It does recognise that there is a USB device with VID and PID, but no further detail.
 - Same behaviour when I press G0 button or not. Button is not damaged. Checked on pin 5 of actual chip
 - Somebody on the web said it is impossible to trash the ROM bootloader. I am not sure about this.
+
+2023-12-30:
+My ESP32s2 Mini board #1 accepted DFU flashing, although I thought it was in secure mode and would never accept DFU again.
+
+From ESP-IDF CMD shell
+(which has run "C:\bin\Espressif-tools\idf_cmd_init.bat" esp-idf-89a89b1f44f341c977a9f01f3e405218" )
+dfu-util -d 303a:2 -D c:\develop\esp32\tusb_hid\build\dfu.bin

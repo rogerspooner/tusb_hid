@@ -5,5 +5,5 @@
     "board/esp32s2-bridge.cfg"
   ],
   "idf.flashType": "DFU",
-  "idf.portWin": "COM5"
+  "idf.portWin": "COM7"
 }

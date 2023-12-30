@@ -13,6 +13,7 @@
 #include "driver/gpio.h"
 
 #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
+#define INDICATOR_GPIO GPIO_NUM_2 // will output simple indicator voltage
 static const char *TAG = "example";
 
 /************* TinyUSB descriptors ****************/
@@ -133,8 +134,10 @@ static void mouse_draw_square_next_delta(int8_t *delta_x_ret, int8_t *delta_y_re
 static void app_send_hid_demo(void)
 {
     // Keyboard output: Send key 'a/A' pressed and released
-    ESP_LOGI(TAG, "Sending Keyboard report");
-    uint8_t keycode[6] = {HID_KEY_A};
+    static unsigned int hid_count = 0;
+    ESP_LOGI(TAG, "Sending Keyboard report %d", hid_count);
+    uint8_t keycode[6] = {HID_KEY_A + (hid_count%16)};
+    hid_count++;
     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, keycode);
     vTaskDelay(pdMS_TO_TICKS(50));
     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
@@ -161,9 +164,18 @@ void app_main(void)
         .pull_up_en = true,
         .pull_down_en = false,
     };
+    const gpio_config_t indicator_config = {
+        .pin_bit_mask = BIT64(INDICATOR_GPIO),
+        .mode = GPIO_MODE_OUTPUT,
+        .intr_type = GPIO_INTR_DISABLE,
+        .pull_up_en = false,
+        .pull_down_en = false,
+    };
+    unsigned int bIndication = 0;
     ESP_ERROR_CHECK(gpio_config(&boot_button_config));
+    ESP_ERROR_CHECK(gpio_config(&indicator_config));
 
-    ESP_LOGI(TAG, "USB initialization");
+    ESP_LOGI(TAG, "USB initialization (Roger woz ere)");
     const tinyusb_config_t tusb_cfg = {
         .device_descriptor = NULL,
         .string_descriptor = hid_string_descriptor,
@@ -180,6 +192,12 @@ void app_main(void)
             static bool send_hid_data = true;
             if (send_hid_data) {
                 app_send_hid_demo();
+            } else
+            {
+              // toggle gpio2
+              bIndication ^= 1;
+              gpio_set_level(INDICATOR_GPIO, bIndication);
+              vTaskDelay(pdMS_TO_TICKS(2000));
             }
             send_hid_data = !gpio_get_level(APP_BUTTON);
         }
