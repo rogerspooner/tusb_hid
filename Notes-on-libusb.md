@@ -1,3 +1,8 @@
+ESP-IDF sdk installed from single Windows installer, to common directory in c:\bin
+There are various ways to install it and run the tools. dfu-util doesn't seem to be added to the PATH in all cases.
+Some commands work better in CMD shell, others in Visual Studio Code tool scripts
+VS Code tool scripts: Press F1 then type ESP. Each has a simpler shortcut.
+
 Install Zadig app, for USB driver installation.
 List all devices.
 Expect to see ESP32-S2 Interface 2
@@ -26,6 +31,10 @@ Install a version of libusb for the device
 
 After uninstalling USB devie drivers, it can help to reboot the computer.
 When resetting the s2mini device, it sometimes behaves differently. Try again, slower.
+Hold GPIO 0 button down. Briefly press RESET button. Later, release pin 0.
+Two devices appear in Windows:
+- ESP32S2 device 
+- Serial port COM7. Not sure what this is good for.
 
 Installed WinUSB (libusb) using Zadig. Then serial port COM5 appeared.
 
@@ -45,7 +54,25 @@ This worked about 3 times after various resets, but since then,
 
 2023-12-30:
 My ESP32s2 Mini board #1 accepted DFU flashing, although I thought it was in secure mode and would never accept DFU again.
+https://www.wemos.cc/en/latest/s2/s2_mini.html
 
-From ESP-IDF CMD shell
+Build in Visual Studio Code using Ctrl-E, B
+Flash in CMD shell with dfu-util:
 (which has run "C:\bin\Espressif-tools\idf_cmd_init.bat" esp-idf-89a89b1f44f341c977a9f01f3e405218" )
 dfu-util -d 303a:2 -D c:\develop\esp32\tusb_hid\build\dfu.bin
+
+Console output: ----------------------
+Use sdkconfig to set console output to UART1 on GPIO's 17, 18
+Connect FTDI USB serial port to GPIO pins 17, 18 and GND
+Monitor COM3 serial port using PuTTy (or whichever COM port the FTDI interface appears on)
+Console output from bootloader may not appear, but actually does seem to.
+
+Physical pins:
+WEMOS ESP32 S2 Mini board 
+39 - Keyboard column L
+37 - Keyboard column K
+35 - Diode to Keyboard Row Y
+33 - Diode to Keyboard Row H
+18 - UART1 RX (trivial)
+17 - UART1 TX (console log)
+16 - Keyboard Column J

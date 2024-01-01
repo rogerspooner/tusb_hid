@@ -13,8 +13,8 @@
 #include "driver/gpio.h"
 
 #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
-#define INDICATOR_GPIO GPIO_NUM_2 // will output simple indicator voltage
-static const char *TAG = "example";
+#define INDICATOR_GPIO GPIO_NUM_15 // will output simple indicator voltage
+static const char *TAG = "tag1";
 
 /************* TinyUSB descriptors ****************/
 
@@ -34,14 +34,33 @@ const uint8_t hid_report_descriptor[] = {
 /**
  * @brief String descriptor
  */
-const char* hid_string_descriptor[5] = {
+const char* hid_string_descriptor[6] = {
     // array of pointer to string descriptors
     (char[]){0x09, 0x04},  // 0: is supported language is English (0x0409)
-    "TinyUSB",             // 1: Manufacturer
-    "TinyUSB Device",      // 2: Product
+    "RIWS",             // 1: Manufacturer
+    "RIWS Keyboard 1",      // 2: Product
     "123456",              // 3: Serials, should use chip ID
-    "Example HID interface",  // 4: HID
+    "RIWS HID interface",  // 4: HID
+    NULL                   // end of list
 };
+
+const tusb_desc_device_t kbd_device_descriptor = {
+  .bLength = sizeof(tusb_desc_device_t),
+  .bDescriptorType = TUSB_DESC_DEVICE,
+  .bcdUSB = 0x0200,
+  .bDeviceClass = TUSB_CLASS_MISC,
+  .bDeviceSubClass = MISC_SUBCLASS_COMMON,
+  .bDeviceProtocol = MISC_PROTOCOL_IAD,
+  .bMaxPacketSize0 = CFG_TUD_ENDPOINT0_SIZE,
+  .idVendor = USB_ESPRESSIF_VID,
+  .idProduct = 0x4101, // RIWS made up
+  .bcdDevice = CONFIG_TINYUSB_DESC_BCD_DEVICE,
+  .iManufacturer = 0x01,
+  .iProduct = 0x02,
+  .iSerialNumber = 0x03,
+  .bNumConfigurations = 0x01
+};
+
 
 /**
  * @brief Configuration descriptor
@@ -55,6 +74,10 @@ static const uint8_t hid_configuration_descriptor[] = {
     // Interface number, string index, boot protocol, report descriptor len, EP In address, size & polling interval
     TUD_HID_DESCRIPTOR(0, 4, false, sizeof(hid_report_descriptor), 0x81, 16, 10),
 };
+
+static const uint8_t keyboard_rows[] = { 33, 35 }; // outputs
+static const uint8_t keyboard_cols[] = { 16, 37, 39 }; // inputs
+
 
 /********* TinyUSB HID callbacks ***************/
 
@@ -171,13 +194,39 @@ void app_main(void)
         .pull_up_en = false,
         .pull_down_en = false,
     };
-    unsigned int bIndication = 0;
+    gpio_config_t row_config = {
+        .pin_bit_mask = 0, // to be updated
+        .mode = GPIO_MODE_OUTPUT,
+        .intr_type = GPIO_INTR_DISABLE,
+        .pull_up_en = false,
+        .pull_down_en = false,
+    };
+    gpio_config_t col_config = {
+        .pin_bit_mask = 0, // to be updated
+        .mode = GPIO_MODE_INPUT,
+        .intr_type = GPIO_INTR_DISABLE,
+        .pull_up_en = false,
+        .pull_down_en = false,
+    };
+    int i;
+    unsigned int iIndication = 0;
     ESP_ERROR_CHECK(gpio_config(&boot_button_config));
     ESP_ERROR_CHECK(gpio_config(&indicator_config));
+    for (i=0; i<10; i++)
+    { iIndication ^= 1;
+      gpio_set_level(INDICATOR_GPIO, iIndication);
+      vTaskDelay(pdMS_TO_TICKS(100));
+    }
 
+    for (i = 0; i < sizeof(keyboard_rows); i++)
+      row_config.pin_bit_mask |= BIT64(keyboard_rows[i]);
+    ESP_ERROR_CHECK(gpio_config(&row_config));
+    for (i = 0; i < sizeof(keyboard_cols); i++)
+      col_config.pin_bit_mask |= BIT64(keyboard_cols[i]);
+    ESP_ERROR_CHECK(gpio_config(&col_config));
     ESP_LOGI(TAG, "USB initialization (Roger woz ere)");
     const tinyusb_config_t tusb_cfg = {
-        .device_descriptor = NULL,
+        .device_descriptor = &kbd_device_descriptor,
         .string_descriptor = hid_string_descriptor,
         .string_descriptor_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]),
         .external_phy = false,
@@ -195,9 +244,9 @@ void app_main(void)
             } else
             {
               // toggle gpio2
-              bIndication ^= 1;
-              gpio_set_level(INDICATOR_GPIO, bIndication);
-              vTaskDelay(pdMS_TO_TICKS(2000));
+              iIndication ^= 1;
+              gpio_set_level(INDICATOR_GPIO, iIndication);
+              vTaskDelay(pdMS_TO_TICKS(500));
             }
             send_hid_data = !gpio_get_level(APP_BUTTON);
         }
