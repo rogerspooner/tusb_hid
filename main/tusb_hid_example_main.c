@@ -75,8 +75,14 @@ static const uint8_t hid_configuration_descriptor[] = {
     TUD_HID_DESCRIPTOR(0, 4, false, sizeof(hid_report_descriptor), 0x81, 16, 10),
 };
 
-static const uint8_t keyboard_rows[] = { 33, 35 }; // outputs
-static const uint8_t keyboard_cols[] = { 16, 37, 39 }; // inputs
+#define KEY_ROW_COUNT 2
+#define KEY_COL_COUNT 3
+static const uint8_t keyboard_rows[KEY_ROW_COUNT] = { 33, 35 }; // outputs
+static const uint8_t keyboard_cols[KEY_COL_COUNT] = { 16, 37, 39 }; // inputs
+static const uint8_t keyboard_keys[KEY_ROW_COUNT][KEY_COL_COUNT] = {
+    { HID_KEY_J, HID_KEY_K, HID_KEY_L } , 
+    { HID_KEY_U, HID_KEY_I, HID_KEY_O }
+  };
 
 
 /********* TinyUSB HID callbacks ***************/
@@ -177,6 +183,103 @@ static void app_send_hid_demo(void)
     }
 }
 
+static uint8_t keys_prev_pressed[KEY_ROW_COUNT][KEY_COL_COUNT];
+static uint64_t key_col_mask = 0;
+static uint64_t key_row_mask = 0;
+
+static void init_keyboard_scan(void)
+{
+    gpio_config_t row_config = {
+        .pin_bit_mask = 0, // to be updated
+        .mode = GPIO_MODE_OUTPUT,
+        .intr_type = GPIO_INTR_DISABLE,
+        .pull_up_en = false,
+        .pull_down_en = false,
+    };
+    gpio_config_t col_config = {
+        .pin_bit_mask = 0, // to be updated
+        .mode = GPIO_MODE_INPUT,
+        .intr_type = GPIO_INTR_DISABLE,
+        .pull_up_en = false,
+        .pull_down_en = true,
+    };
+    int i;
+    for (i = 0; i < KEY_ROW_COUNT; i++)
+      row_config.pin_bit_mask |= BIT64(keyboard_rows[i]);
+    ESP_ERROR_CHECK(gpio_config(&row_config));
+    for (i = 0; i < KEY_COL_COUNT; i++)
+      col_config.pin_bit_mask |= BIT64(keyboard_cols[i]);
+    ESP_ERROR_CHECK(gpio_config(&col_config));
+
+    key_row_mask = 0;
+    for (int row = 0; row < KEY_ROW_COUNT ; row ++ )
+    { key_row_mask |= BIT64(keyboard_rows[row]) ;
+      gpio_set_level(keyboard_rows[row], 0);
+    }
+    key_col_mask = 0;
+    for (int col = 0; col < KEY_COL_COUNT; col++)
+      key_col_mask |= BIT64(keyboard_cols[col]);
+    for (int row = 0; row < KEY_ROW_COUNT; row++)
+      for (int col = 0; col < KEY_COL_COUNT; col++)
+        keys_prev_pressed[row][col] = 0;
+}
+
+
+static void send_usb_key_stroke(void)
+{
+    uint8_t keycodes[6];
+    uint8_t modifier = 0;
+    for (int i=0; i<6; i++)
+      keycodes[i] = 0;
+    int k = HID_KEY_NONE;
+    for (int row = 0; row < KEY_ROW_COUNT; row++ )
+      for (int col = 0; col < KEY_COL_COUNT; col++ )
+      { if (keys_prev_pressed[row][col] != 0)
+          keycodes[k++] = keyboard_keys[row][col];
+        k = k % 6;
+      }
+    ESP_LOGI("kbdscan","Sending key strokes for %d keys",k);
+    tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, modifier, keycodes);
+}
+
+static void scan_keyboard(void)
+{
+    // iterate through keyboard_rows[], setting one high at a time.
+    // read values from keyboard_cols[]
+    // if values change between scans, then notify host PC of key up or key down.
+    // uint64_t io_data = 0;
+    static uint8_t keys_now_pressed[KEY_ROW_COUNT][KEY_COL_COUNT];
+    ESP_LOGI("kbdscan", "Scanning keyboard. Row mask = x%llx. Col mask = x%llx. ", key_row_mask, key_col_mask);
+    for (int row = 0; row < KEY_ROW_COUNT ; row ++ )
+    {
+        // Set current row high
+        gpio_set_level(keyboard_rows[row], 1);
+        // Delay for test probe. Not really needed
+        // Read columns
+        // io_data = REG_READ(GPIO_IN_REG) & key_col_mask;
+        for (int col = 0; col < KEY_COL_COUNT; col++ )
+            if (gpio_get_level (keyboard_cols[col]))
+            {   ESP_LOGI("kbdscan","Key x%x down: row %d: col %d (GPIO row %d, col %d)",
+                    keyboard_keys[row][col], row, col, keyboard_rows[row], keyboard_cols[col]);
+                keys_now_pressed[row][col] = 1;
+            }
+            else
+                keys_now_pressed[row][col] = 0;
+        // clear current row
+        gpio_set_level(keyboard_rows[row], 0);
+    }
+    int changed_pressed = 0;
+    for (int row = 0; row < KEY_ROW_COUNT; row++)
+      for (int col = 0; col < KEY_COL_COUNT; col++)
+      { if (keys_now_pressed[row][col] != keys_prev_pressed[row][col])
+          changed_pressed = 1;
+        keys_prev_pressed[row][col] = keys_now_pressed[row][col];
+      }
+    if (changed_pressed)
+      send_usb_key_stroke();
+
+}
+
 void app_main(void)
 {
     // Initialize button that will trigger HID reports
@@ -194,20 +297,6 @@ void app_main(void)
         .pull_up_en = false,
         .pull_down_en = false,
     };
-    gpio_config_t row_config = {
-        .pin_bit_mask = 0, // to be updated
-        .mode = GPIO_MODE_OUTPUT,
-        .intr_type = GPIO_INTR_DISABLE,
-        .pull_up_en = false,
-        .pull_down_en = false,
-    };
-    gpio_config_t col_config = {
-        .pin_bit_mask = 0, // to be updated
-        .mode = GPIO_MODE_INPUT,
-        .intr_type = GPIO_INTR_DISABLE,
-        .pull_up_en = false,
-        .pull_down_en = false,
-    };
     int i;
     unsigned int iIndication = 0;
     ESP_ERROR_CHECK(gpio_config(&boot_button_config));
@@ -217,13 +306,7 @@ void app_main(void)
       gpio_set_level(INDICATOR_GPIO, iIndication);
       vTaskDelay(pdMS_TO_TICKS(100));
     }
-
-    for (i = 0; i < sizeof(keyboard_rows); i++)
-      row_config.pin_bit_mask |= BIT64(keyboard_rows[i]);
-    ESP_ERROR_CHECK(gpio_config(&row_config));
-    for (i = 0; i < sizeof(keyboard_cols); i++)
-      col_config.pin_bit_mask |= BIT64(keyboard_cols[i]);
-    ESP_ERROR_CHECK(gpio_config(&col_config));
+    init_keyboard_scan();
     ESP_LOGI(TAG, "USB initialization (Roger woz ere)");
     const tinyusb_config_t tusb_cfg = {
         .device_descriptor = &kbd_device_descriptor,
@@ -232,7 +315,6 @@ void app_main(void)
         .external_phy = false,
         .configuration_descriptor = hid_configuration_descriptor,
     };
-
     ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
     ESP_LOGI(TAG, "USB initialization DONE");
 
@@ -246,6 +328,7 @@ void app_main(void)
               // toggle gpio2
               iIndication ^= 1;
               gpio_set_level(INDICATOR_GPIO, iIndication);
+              scan_keyboard();
               vTaskDelay(pdMS_TO_TICKS(500));
             }
             send_hid_data = !gpio_get_level(APP_BUTTON);

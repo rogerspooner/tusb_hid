@@ -6,5 +6,8 @@
   ],
   "idf.flashType": "DFU",
   "idf.portWin": "COM7",
-  "search.useIgnoreFiles": false
+  "search.useIgnoreFiles": false,
+  "files.associations": {
+    "*.inc": "c"
+  }
 }
