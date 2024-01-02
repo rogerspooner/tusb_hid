@@ -249,7 +249,6 @@ static void scan_keyboard(void)
     // if values change between scans, then notify host PC of key up or key down.
     // uint64_t io_data = 0;
     static uint8_t keys_now_pressed[KEY_ROW_COUNT][KEY_COL_COUNT];
-    ESP_LOGI("kbdscan", "Scanning keyboard. Row mask = x%llx. Col mask = x%llx. ", key_row_mask, key_col_mask);
     for (int row = 0; row < KEY_ROW_COUNT ; row ++ )
     {
         // Set current row high
@@ -320,8 +319,8 @@ void app_main(void)
 
     while (1) {
         if (tud_mounted()) {
-            static bool send_hid_data = true;
-            if (send_hid_data) {
+            static bool send_fake_data = true;
+            if (send_fake_data) {
                 app_send_hid_demo();
             } else
             {
@@ -329,10 +328,9 @@ void app_main(void)
               iIndication ^= 1;
               gpio_set_level(INDICATOR_GPIO, iIndication);
               scan_keyboard();
-              vTaskDelay(pdMS_TO_TICKS(500));
             }
-            send_hid_data = !gpio_get_level(APP_BUTTON);
+            send_fake_data = !gpio_get_level(APP_BUTTON);
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(25));
     }
 }
