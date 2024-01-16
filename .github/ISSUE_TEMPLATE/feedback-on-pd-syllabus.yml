@@ -10,11 +10,15 @@ body:
       label: Syllabus Topic
       description: Which week of the professional development course are you thinking of?
       options:
-        - Fundamentals / Week 1 / Introspection
-        - Fundamentals | Week 2 | Feedback
-        - Fundamentals / Week 3 | Presentation
-        - Induction / Session 1 / Goals and Expectaions
-        - Induction / Session 2 / What do developers do?
+        - Fundamentals / Lesson 1 / Introspection
+        - Fundamentals / Lesson 2 / Feedback
+        - Fundamentals / Lesson 3 / Presentation
+        - Induction / Lesson 1 / Goals and Expectaions
+        - Induction / Lesson 2 / What do developers do?
+        - Induction / Lesson 3 / SDOT analysis
+        - Git and GitHub
+        - HTML+CSS / Lesson 1 / Developer Communication
+        - HTML+CSS / Lesson 2 / Active Listening
         - Other
   - type: dropdown
     id: section_of_week
@@ -22,13 +26,19 @@ body:
       label: Section within week
       description: Which part of the session / week are you thinking of?
       options:
-        - Preparation part 1
-        - Preparation part 2
-        - Preparation part 3
-        - Preparation part 4
+        - Preparation 1
+        - Preparation 2
+        - Preparation 3
+        - Preparation 4
+        - Session introduction
+        - Exercise 1
+        - Exercise 2
+        - Exercise 3
+        - Exercise 4
         - Coursework exercise 1
         - Coursework exercise 2
         - Coursework exercise 3
+        - All of this lesson
         - Other
   - type: dropdown
     id: feedback_type
@@ -37,14 +47,15 @@ body:
       description: What kind of feedback is this?
       options:
       - It's great. So relevant and well structured.
-      - Good idea but needs refining
-      - Wrong place in the syllabus sequence
       - Suggestion for new content
       - Remove content
-      - Minor edit
+      - Edit
       - Style and approach
+      - Wrong place in the syllabus sequence
       - Too slow / not enough detail
       - Too fast / too much detail
+      - Not relevant
+      - Poor examples / exercises
       - Didn't flow well in the class
   - type: textarea
     attributes:
