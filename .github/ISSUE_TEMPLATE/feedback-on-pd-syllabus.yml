@@ -86,22 +86,22 @@ body:
       - Poor examples / exercises
       - Didn't flow well in the class
   - type: textarea
+    id: detail
     attributes:
-      id: detail
       label: More detail on your feedback
       description: Tell us about your concern in as much depth as you wish.    
   - type: textarea
+    id: old_content
     attributes:
-      id: old_content
       label: Extract from the old content
       description: Which existing words / activity / step are you thinking about?
   - type: input
+    id: old_url
     attributes:
-      id: old_url
       label: Web page address of old content
   - type: textarea
+    id: new_content
     attributes:
-      id: new_content
       label: Suggested new content
       description: If you know how it should be, please say here.
       
