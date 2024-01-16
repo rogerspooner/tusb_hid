@@ -4,6 +4,11 @@ description: Give feedback on professional development resources to the CYF team
 title: "Feedback on XXX"
 labels: [PD]
 body:
+  - type: markdown
+    attributes:
+      value: Thank you for offering feedback on the Professional Development syllabus.
+        You are helping to make it better. We will read your comments and put them
+  
   - type: dropdown
     id: syllabus_topic
     attributes:
@@ -41,6 +46,29 @@ body:
         - All of this lesson
         - Other
   - type: dropdown
+    id: effectiveness
+    attributes:
+      label: Rating
+      description: In a single number, how constructive is this material?
+      options: 
+        - 1 ★
+        - 2 ★★
+        - 3 ★★★
+        - 4 ★★★★
+        - 5 ★★★★★
+        - Other
+  - type: dropdown
+    id: role
+    attributes:
+      label: Your role in CYF
+      description: What brings you to be looking at the PD syllabus?
+      options:
+        - Trainee
+        - PD volunteer delivering the content
+        - Other CYF volunteer or staff
+        - PD syllabus team member
+        - Other
+  - type: dropdown
     id: feedback_type
     attributes:
       label: Suggestion type
@@ -59,8 +87,24 @@ body:
       - Didn't flow well in the class
   - type: textarea
     attributes:
+      id: detail
       label: More detail on your feedback
       description: Tell us about your concern in as much depth as you wish.    
+  - type: textarea
+    attributes:
+      id: old_content
+      label: Extract from the old content
+      description: Which existing words / activity / step are you thinking about?
+  - type: input
+    attributes:
+      id: old_url
+      label: Web page address of old content
+  - type: textarea
+    attributes:
+      id: new_content
+      label: Suggested new content
+      description: If you know how it should be, please say here.
+      
 
 ---
 
