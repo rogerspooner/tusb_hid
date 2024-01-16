@@ -2,8 +2,52 @@
 name: Feedback on PD syllabus
 about: Give feedback on professional development resources to the CYF team
 title: Feedback on XXX
-labels: ''
-assignees: ''
+labels: [PD]
+body:
+  - type: dropdown
+    id: feedback_type
+    attributes:
+      label: Suggestion type
+      description: What kind of feedback is this?
+      options:
+      - It's great. So relevant and well structured.
+      - Good idea but needs refining
+      - Wrong place in the syllabus sequence
+      - Suggestion for new content
+      - Remove content
+      - Minor edit
+      - Style and approach
+      - Too slow / not enough detail
+      - Too fast / too much detail
+      - Didn't flow well in the class
+  - type: dropdown
+    id: syllabus_topic
+    attributes:
+      label: Syllabus Topic
+      description: Which week of the professional development course are you thinking of?
+      options:
+        - Fundamentals Week 1 Introspection
+        - Fundamentals Week 2 Feedback
+        - Fundamentals Week 3 Presentation
+  - type: dropdown
+    id: section_of_week
+    attributes:
+      label: Section within week
+      description: Which part of the session / week are you thinking of?
+      options:
+        - Preparation part 1
+        - Preparation part 2
+        - Preparation part 3
+        - Preparation part 4
+        - Coursework exercise 1
+        - Coursework exercise 2
+        - Coursework exercise 3
+  - type: textarea
+    attributes:
+      label: More detail on your feedback
+      description: Tell us about your concern in as much depth as you wish.
+      required: false
+    
 
 ---
 
