@@ -45,9 +45,7 @@ body:
   - type: textarea
     attributes:
       label: More detail on your feedback
-      description: Tell us about your concern in as much depth as you wish.
-      required: false
-    
+      description: Tell us about your concern in as much depth as you wish.    
 
 ---
 
